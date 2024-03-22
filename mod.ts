@@ -1,7 +1,7 @@
 /**
- * Classes and types for `jsr:@ssr/diplodocache`.
- *
  * @module
+ *
+ * Classes and types for `jsr:@ssr/diplodocache`.
  */
 export {Diplodocache} from './src/mod.ts';
 export type {
