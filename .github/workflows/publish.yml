@@ -21,5 +21,8 @@ jobs:
       - name: Install Deno
         uses: denoland/setup-deno@v1
 
+      - name: Bundle Worker
+        run: deno run -A src/bundle.ts
+
       - name: Publish Package
         run: deno publish
