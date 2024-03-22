@@ -1,0 +1,19 @@
+{
+  "name": "@ssr/diplodocache",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./mod.ts",
+    "./types": "./src/types.ts"
+  },
+  "publish": {
+    "include": [
+      "src",
+      "deno.json",
+      "mod.ts",
+      "deps.ts",
+      "LICENSE",
+      "README.md"
+    ],
+    "exclude": [".github"]
+  }
+}
