@@ -79,7 +79,7 @@ export class Diplodocache {
       this.#worker.terminate();
     });
     // Setup the worker
-    this.#worker = new Worker(new URL('./worker.ts', import.meta.url), {
+    this.#worker = new Worker(import.meta.resolve('./worker.ts'), {
       type: 'module'
     });
     this.#worker.addEventListener('message', (ev) => this.#onMessage(ev));
