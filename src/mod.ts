@@ -79,7 +79,7 @@ export class Diplodocache {
       this.#worker.terminate();
     });
     // Setup the worker
-    fetch(new URL(import.meta.resolve('./worker.bundle.ts'))).then(
+    fetch(import.meta.resolve('./worker.bundle.ts')).then(
       async (response) => {
         const text = await response.text();
         const blob = new Blob([text], {type: 'application/typescript'});
