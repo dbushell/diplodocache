@@ -29,7 +29,7 @@ export class Diplodocache {
   #logTimeFormat: Intl.DateTimeFormat;
   #cachePath: string;
   #readyState: 0 | 1 | 2 | 3;
-  #worker: Worker;
+  #worker!: Worker;
   // deno-lint-ignore no-explicit-any
   #work: Map<string, Deferred<any>>;
   // deno-lint-ignore no-explicit-any
@@ -79,15 +79,17 @@ export class Diplodocache {
       this.#worker.terminate();
     });
     // Setup the worker
-    const text = Deno.readTextFileSync(
-      new URL(import.meta.resolve('./worker.bundle.ts')).pathname
+    fetch(new URL(import.meta.resolve('./worker.bundle.ts'))).then(
+      async (response) => {
+        const text = await response.text();
+        const blob = new Blob([text], {type: 'application/typescript'});
+        const url = URL.createObjectURL(blob);
+        this.#worker = new Worker(url, {
+          type: 'module'
+        });
+        this.#worker.addEventListener('message', (ev) => this.#onMessage(ev));
+      }
     );
-    const blob = new Blob([text], {type: 'application/typescript'});
-    const url = URL.createObjectURL(blob);
-    this.#worker = new Worker(url, {
-      type: 'module'
-    });
-    this.#worker.addEventListener('message', (ev) => this.#onMessage(ev));
   }
 
   /**
