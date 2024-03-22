@@ -79,7 +79,12 @@ export class Diplodocache {
       this.#worker.terminate();
     });
     // Setup the worker
-    this.#worker = new Worker(import.meta.resolve('./worker.ts'), {
+    const text = Deno.readTextFileSync(
+      new URL(import.meta.resolve('./worker.bundle.ts')).pathname
+    );
+    const blob = new Blob([text], {type: 'application/typescript'});
+    const url = URL.createObjectURL(blob);
+    this.#worker = new Worker(url, {
       type: 'module'
     });
     this.#worker.addEventListener('message', (ev) => this.#onMessage(ev));
