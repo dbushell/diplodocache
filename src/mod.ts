@@ -11,14 +11,14 @@ import type {
   Payload,
   LogPayload,
   FetchPayload,
+  MetaPayload,
+  PurgePayload,
   ReadyPayload,
   ResponsePayload,
-  PurgePayload,
   FetchOptions,
   Options
 } from './types.ts';
 import {fs, path, serveFile} from '../deps.ts';
-import {MetaPayload} from './types.ts';
 
 /** Diplodocache class */
 export class Diplodocache {
