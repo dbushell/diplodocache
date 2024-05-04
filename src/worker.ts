@@ -137,9 +137,11 @@ const onMeta = (props: MetaPayload['payload']) => {
     payload: props
   };
   // Add copy of cached metadata
-  if (Object.hasOwn(cacheMeta, props.url!)) {
-    message.payload = structuredClone(cacheMeta[props.url!]);
-    message.payload.url = props.url;
+  if (Object.hasOwn(cacheMeta, props.url)) {
+    message.payload = {
+      ...structuredClone(cacheMeta[props.url]),
+      url: props.url
+    };
   }
   sendMessage(message);
 };

@@ -328,7 +328,7 @@ export class Diplodocache {
 
   /** Handle fetch message response */
   async #onResponse(ev: MessageEvent<ResponsePayload>) {
-    const {url, body, headers, error} = ev.data.payload;
+    const {url, body, headers, status} = ev.data.payload;
     const key = `fetch:${url}`;
     if (this.#work.has(key) === false) {
       return;
@@ -337,14 +337,17 @@ export class Diplodocache {
     const request = this.#request.get(deffered);
     this.#work.delete(key);
     this.#request.delete(deffered);
-    if (body === undefined) {
-      deffered.reject(error);
-      return;
+    // Request errored
+    if (body === null) {
+      return deffered.resolve(
+        new Response(null, {status, headers: new Headers(headers)})
+      );
     }
     // Request was prefetched only return headers
-    if (body === null) {
-      deffered.resolve(new Response(null, {headers: new Headers(headers)}));
-      return;
+    if (body === undefined) {
+      return deffered.resolve(
+        new Response(null, {headers: new Headers(headers)})
+      );
     }
     // Serve the downloaded file from cache
     try {

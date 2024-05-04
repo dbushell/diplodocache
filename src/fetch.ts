@@ -16,60 +16,61 @@ export const fetchCallback = async (item: Download): Promise<boolean> => {
     log.warn(`Abandoned: ${url}`);
     return false;
   }
-  // Event listener for abort signal
-  const onError = () => {
-    removeSync(url);
-    log.info(`Aborted: ${url}`);
-  };
+  let status = 500;
   try {
     // Validate URL before fetch
     new URL(url);
     // Return from cache if available
-    if (fetchCache(item)) {
-      return true;
-    }
+    status = fetchCache(item);
+    if (status === 200) return true;
+    removeSync(url);
     // Fetch from network and store in cache
-    item.controller.signal.addEventListener('abort', onError);
-    await fetchFresh(item);
-    return true;
-  } catch (err) {
-    onError();
+    status = await fetchFresh(item);
+    if (status === 200) return true;
+  } catch {
     log.warn(`Failed: ${url}`);
-    sendMessage({type: 'fetch', payload: {url, error: err}});
-    return false;
-  } finally {
-    item.controller.signal.removeEventListener('abort', onError);
   }
+  removeSync(url);
+  // Send failed response
+  const message: ResponsePayload = {
+    type: 'response',
+    payload: {
+      url,
+      status,
+      body: null,
+      headers: {}
+    }
+  };
+  sendMessage(message);
+  return false;
 };
 
 /**
  * Fetch item from cache and post `Response` message to main thread
  * @returns `true` if cache hit
  */
-const fetchCache = (item: Download): boolean => {
+const fetchCache = (item: Download): number => {
   const {url} = item;
   // Fail if item is not in cache
   if (Object.hasOwn(cacheMeta, url) === false) {
-    return false;
+    return 404;
   }
   const entry = cacheMeta[url];
   // Remove cache entry and fail if hash mismatch
   if (entry.hash !== item.hash) {
-    removeSync(url);
-    return false;
+    return 410;
   }
   // Remove cache entry and fail if time has expired
   const age = Date.now() - new Date(entry.created).getTime();
   if (age > item.options.maxAge) {
-    removeSync(url);
-    return false;
+    return 410;
   }
   // Setup response message
   const message: ResponsePayload = {
     type: 'response',
     payload: {
       url,
-      body: item.options.prefetch ? null : item.path,
+      body: item.options.prefetch ? undefined : item.path,
       headers: {
         'content-type': entry.contentType,
         'x-cache': 'HIT'
@@ -81,14 +82,14 @@ const fetchCache = (item: Download): boolean => {
   }
   log.debug(`Hit: ${url}`);
   sendMessage(message);
-  return true;
+  return 200;
 };
 
 /**
  * Fetch item from network and post `Response` message to main thread
  * @returns `true` if cache stored
  */
-const fetchFresh = async (item: Download): Promise<boolean> => {
+const fetchFresh = async (item: Download): Promise<number> => {
   const {url} = item;
   log.debug(`Miss: ${url}`);
   const headers = new Headers();
@@ -100,7 +101,7 @@ const fetchFresh = async (item: Download): Promise<boolean> => {
   });
   if (!response.ok || !response.body) {
     log.error(`Fetch: [${response.status} - ${response.statusText}] ${url}`);
-    return false;
+    return response.status === 200 ? 418 : response.status;
   }
   // Get content type or infer from file extension
   const contentType =
@@ -125,7 +126,7 @@ const fetchFresh = async (item: Download): Promise<boolean> => {
     type: 'response',
     payload: {
       url,
-      body: item.options.prefetch ? null : item.path,
+      body: item.options.prefetch ? undefined : item.path,
       headers: {
         'content-type': contentType,
         'x-cache': 'MISS'
@@ -174,9 +175,8 @@ const fetchFresh = async (item: Download): Promise<boolean> => {
   } catch {
     if (item.controller.signal.aborted === false) {
       cancelled ? log.warn(`Cancelled: ${url}`) : log.error(`Write: ${url}`);
-      removeSync(url);
     }
-    return false;
+    return 500;
   } finally {
     if (timeout) clearTimeout(timeout);
     if (writer) writer.releaseLock();
@@ -184,5 +184,5 @@ const fetchFresh = async (item: Download): Promise<boolean> => {
     if (file) file.close();
   }
   sendMessage(message);
-  return true;
+  return 200;
 };

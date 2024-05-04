@@ -149,6 +149,6 @@ export interface ResponsePayload extends Payload {
     url: string;
     headers: {[key: string]: string};
     body: string | null | undefined;
-    error?: unknown;
+    status?: number;
   };
 }
