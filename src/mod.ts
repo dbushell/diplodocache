@@ -79,26 +79,10 @@ export class Diplodocache {
       this.#worker.terminate();
     });
     // Setup the worker
-    const bundle = import.meta.resolve('./worker.min.js');
-    let blobURL: string;
-    fetch(bundle)
-      .then(async (response) => {
-        this.#logger.debug('Using Bundled Worker');
-        blobURL = URL.createObjectURL(
-          new Blob([await response.text()], {type: 'application/javascript'})
-        );
-        this.#worker = new Worker(blobURL, {type: 'module'});
-      })
-      .catch(() => {
-        this.#logger.debug('Using TypeScript Worker');
-        this.#worker = new Worker(import.meta.resolve('./worker.ts'), {
-          type: 'module'
-        });
-      })
-      .finally(() => {
-        this.#worker.addEventListener('message', (ev) => this.#onMessage(ev));
-        setTimeout(() => blobURL && URL.revokeObjectURL(blobURL), 0);
-      });
+    this.#worker = new Worker(import.meta.resolve('./worker.ts'), {
+      type: 'module'
+    });
+    this.#worker.addEventListener('message', (ev) => this.#onMessage(ev));
   }
 
   /**
