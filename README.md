@@ -1,3 +1,7 @@
+**(RETIRED)** Do not use this project was binned.
+
+* * *
+
 # 💾 Diplodocache
 
 Experimental fetch cache for Deno. API subject to change!
